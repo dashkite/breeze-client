@@ -2,11 +2,24 @@ development:
   breeze:
     api: https://breeze-development-api.dashkite.com/
     authority: breeze-development-api.dashkite.com
-  # TODO this means you can't login on a deployed dev env
-  oauth: http://localhost:3000/oauth
-
+  oauth:
+    baseURL: https://accounts.google.com/o/oauth2/v2/auth
+    parameters:
+      client_id: -|
+        610816915463-0on108g5q89r47lgksginbo6kskb60di.apps.googleusercontent.com
+      # TODO this means you can't login on a deployed dev env
+      redirect_uri: http://localhost:3000/oauth
+      response_type: token
+      scope: https://www.googleapis.com/auth/userinfo.email
 production:
   breeze:
     api: https://breeze-api.dashkite.com/
     authority: breeze-api.dashkite.com
-  oauth: https://hype.dashkite.com/oauth
+  oauth:
+    baseURL: https://accounts.google.com/o/oauth2/v2/auth
+    parameters:
+      client_id: -|
+        610816915463-0on108g5q89r47lgksginbo6kskb60di.apps.googleusercontent.com
+      redirect_uri: https://hype.dashkite.com/oauth
+      response_type: token
+      scope: https://www.googleapis.com/auth/userinfo.email

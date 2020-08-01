@@ -2,9 +2,9 @@ import {flow, curry, tee} from "@pandastrike/garden"
 import * as m from "@dashkite/mercury"
 import s from "@dashkite/mercury-sky"
 import z from "@dashkite/mercury-zinc"
-import {get} from "helpers"
-import c from "configuration"
-import p from "profiles/hype"
+import p from "./profiles"
+import c from "./configuration"
+import {get} from "./helpers"
 
 initialize = flow [
   m.use m.Fetch.client mode: "cors"
@@ -78,6 +78,13 @@ Authentication =
       m.content
     ]
     s.request
+    # restore the breeze profile so that
+    # we can accept the grants ...
+    tee flow [
+      get "json"
+      get "profile"
+      p.createFromJSON
+    ]
     m.from [
       fetchAPIKey
       z.grants c.breeze.authority

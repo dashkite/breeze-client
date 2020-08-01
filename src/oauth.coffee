@@ -4,7 +4,7 @@ import p from "./profile"
 import * as r from "./resources"
 import * as h from "./helpers"
 
-hashParameters = ->
+getParamters = ->
   parameters = new URLSearchParams window.location.hash[1..]
   Object.fromEntries parameters.entries()
 
@@ -22,7 +22,7 @@ create = k.test (h.not p.exists),
 
 register = tee flow [
   k.push p.get
-  k.push hashParameters
+  k.push getParameters
   k.push ({access_token}, {nickname}) ->
       nickname: profile.nickname
       metadata: {access_token}
@@ -70,13 +70,6 @@ register = (name, json) ->
 
 authenticate = (fromJSON) ->
   flow [
-    # WARNING Not really sure how this was working before without first
-    #         creating a Breeze profile? Which sets the current profile!
-    #         Later, the fromJSON hook in restore will set it to point to
-    #         the Hype profile. But this way we don't need to both the
-    #         Authentication.post function with having to call fromJSON
-    #         (which is what we were doing before).
-    p.create
     authenticate
     restore fromJSON
   ]
