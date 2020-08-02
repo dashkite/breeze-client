@@ -3,7 +3,7 @@ import * as k from "@dashkite/katana"
 import * as c from "@dashkite/carbon"
 import html from "./html.pug"
 import css from "./css"
-import cf from "../configuration"
+import cf from "../../configuration"
 
 oauth = ->
   base = cf.oauth.provider.baseURL

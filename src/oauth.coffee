@@ -4,7 +4,7 @@ import p from "./profile"
 import * as r from "./resources"
 import * as h from "./helpers"
 
-getParamters = ->
+getParameters = ->
   parameters = new URLSearchParams window.location.hash[1..]
   Object.fromEntries parameters.entries()
 
@@ -31,29 +31,29 @@ register = tee flow [
   k.peek r.Identities.post
 ]
 
-store = (name, json) ->
+store = (tag, description, json) ->
   flow [
     k.push p.get
     k.push h.get "nickname"
     k.push (content, nickname) ->
-      {content: json, nickname, displayName: name }
+      { content: json, nickname, displayName: description }
     k.push r.Entries.post
-    k.push ({nickname, id}) -> {nickname, id, tag: "hype"}
+    k.push ({nickname, id}) -> { nickname, id, tag }
     k.push r.Tag.put
   ]
 
 authenticate = k.peek flow [
-  hashParameters
+  getParameters
   ({access_token}) ->
     metadata: {access_token}
     service: "google"
   r.Authentication.post
 ]
 
-restore = (fromJSON) ->
+restore = (tag, fromJSON) ->
   flow [
     k.push p.get
-    k.poke ({nickname}) -> {nickname, tag: "hype"}
+    k.poke ({nickname}) -> { nickname, tag }
     k.poke r.Entries.get
     k.poke ([entry]) -> entry
     k.poke r.Entry.get
@@ -61,17 +61,17 @@ restore = (fromJSON) ->
     k.poke fromJSON
   ]
 
-register = (name, json) ->
+register = (tag, name, json) ->
   flow [
     create
     register
     store name, json
   ]
 
-authenticate = (fromJSON) ->
+authenticate = (tag, fromJSON) ->
   flow [
     authenticate
-    restore fromJSON
+    restore tag, fromJSON
   ]
 
 export {register, authenticate}

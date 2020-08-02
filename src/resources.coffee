@@ -2,7 +2,7 @@ import {flow, curry, tee} from "@pandastrike/garden"
 import * as m from "@dashkite/mercury"
 import s from "@dashkite/mercury-sky"
 import z from "@dashkite/mercury-zinc"
-import p from "./profiles"
+import p from "./profile"
 import c from "./configuration"
 import {get} from "./helpers"
 
