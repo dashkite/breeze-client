@@ -1,8 +1,7 @@
 import Zinc from "@dashkite/zinc"
-import Hype from "profiles/hype"
 import c from "configuration"
 
-Breeze =
+Profile =
 
   createFromJSON: (json) ->
     profile = await Zinc.fromJSON json
@@ -22,4 +21,4 @@ Breeze =
     if (profile = await Zinc.getAdjunct c.breeze.authority)?
       profile.delete()
 
-export default Breeze
+export default Profile
