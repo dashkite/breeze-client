@@ -78,6 +78,7 @@ Authentication =
       m.content
     ]
     s.request
+    m.json
     # restore the breeze profile so that
     # we can accept the grants ...
     tee flow [
@@ -89,7 +90,6 @@ Authentication =
       fetchAPIKey
       z.grants c.breeze.authority
     ]
-    m.json
     get "json"
   ]
 
