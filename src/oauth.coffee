@@ -1,4 +1,4 @@
-import {tee, flow} from "@pandastrike/garden"
+import {curry, tee, flow} from "@pandastrike/garden"
 import * as k from "@dashkite/katana"
 import p from "./profile"
 import * as r from "./resources"
@@ -8,7 +8,7 @@ getParameters = ->
   parameters = new URLSearchParams window.location.hash[1..]
   Object.fromEntries parameters.entries()
 
-register = (tag, description, json) ->
+register = curry (tag, description, json) ->
   k.stack flow [
     # first, create the breeze profile if it doesn't exist
     # TODO if this fails, be sure to delete profile from idb
@@ -22,7 +22,7 @@ register = (tag, description, json) ->
           profile: profile.toJSON()
         r.Profiles.post
       ]
-    # next use the redirect query paramters to create an identity
+    # next use the redirect query parameters to create an identity
     tee flow [
       k.push p.get
       k.push getParameters

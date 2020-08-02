@@ -13,7 +13,7 @@ oauth = ->
 class extends c.Handle
 
   c.mixin @, [
-    c.tag "bora-connect"
+    c.tag "breeze-connect"
     c.diff
     c.initialize [ c.shadow, c.sheet css ]
     c.connect [
