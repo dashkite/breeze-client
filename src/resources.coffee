@@ -56,7 +56,7 @@ Identities =
       m.parameters
     ]
     m.from [
-      m.data [ "metadata", "service", "displayName" ]
+      m.data [ "token" ]
       m.content
     ]
     m.from [
@@ -74,7 +74,7 @@ Authentication =
     s.resource "authentication"
     s.method "post"
     m.from [
-      m.data [ "metadata", "service" ]
+      m.data [ "token" ]
       m.content
     ]
     s.request
@@ -166,4 +166,19 @@ Tag =
     s.request
   ]
 
-export {Profiles, Identities, Authentication, Entries, Entry, Tag}
+# in this case, we aren't making the request,
+# we just need to build up the URL based on discovery
+OAuth =
+  get: flow [
+    initialize
+    s.resource "oauth authentication"
+    s.method "get"
+    m.from [
+      m.data [ "service", "redirectURL" ]
+      m.parameters
+    ]
+    get "url"
+    get "href"
+  ]
+
+export {Profiles, Identities, Authentication, Entries, Entry, Tag, OAuth}
