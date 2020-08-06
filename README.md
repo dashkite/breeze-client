@@ -25,24 +25,29 @@ To handle the OAuth redirect, add an appropriate route and call either `register
 # somewhere in your imports
 import {register, authenticate} from "@dashkite/breeze-client"
 
-router.add "/oauth{?parameters}",
+token = ({bindings}) -> bindings.token
+
+router.add "/oauth{?token}",
   name: "oauth"
   flow [
-    # render something ...
-    ->
-      if await profile.exists()
-        do flow [
-          profile.toJSON
+    n.view "main", -> "<p>Connecting &hellip;</p>"
+    n.show
+    test profile.exists,
+      k.stack flow [
+        k.push token
+        k.push profile.toJSON
+        k.mpoke (content, token) -> { content, token }
+        k.peek flow [
           register "hype", "Hype Profile"
+          profile.get
           browse "view"
-        ]
-      else
-        do flow [
-          authenticate "hype"
-          profile.createFromJSON
-          browse "view"
-        ]
-  ]
+        ] ]
+      flow [
+        token
+        authenticate "hype"
+        profile.createFromJSON
+        browse "view"
+      ] ]
 ```
 
 ## API
