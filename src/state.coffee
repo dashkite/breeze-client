@@ -1,6 +1,6 @@
 import p from "./profile"
 
-logout = -> p.delete()
+logout = p.delete
 
 connected = p.exists
 

@@ -18,12 +18,11 @@ class extends c.Handle
       ]
       c.event "click", [
         c.matches "button", [
-          k.log "button"
-          k.spush ->
-            service: "google"
+          c.target
+          k.spush (target) ->
+            service: target.name
             redirectURL: cf.oauth.redirectURL
           flow [
-            k.log "params"
             k.push r.OAuth.get
             k.log "url"
             k.peek (url) -> window.location.assign url

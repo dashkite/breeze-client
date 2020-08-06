@@ -8,6 +8,7 @@ css = q.build q.sheet [
     # TODO this is copied from hype client
     #      refactor into dashkite library?
     #      or add to quark?
+
     q.select "form", [
 
         q.normalize [ "links" ]
@@ -27,6 +28,9 @@ css = q.build q.sheet [
 
         q.select "h1", [
           q.type "heading"
+        ]
+        q.select "h2", [
+          q.type "small heading"
         ]
 
         q.select "label", [
@@ -68,12 +72,26 @@ css = q.build q.sheet [
           basis: q.pct 100
       ] ]
 
-    q.select "nav > ul", [
-      q.reset [ "list" ]
-      q.select "button[name = 'google'] > img", [
-        q.width q.px 32
-        q.height q.px 32
-        q.margin right: q.hrem 2
-      ] ] ] ]
+    q.select "form > section:first-of-type", [
+      q.flex basis: q.hrem 72
+      q.select "> nav > ul", [
+        q.reset [ "list" ]
+        q.rows
+        q.wrap
+        q.select "> li", [
+          q.margin
+            right: q.hrem 2
+            bottom: q.hrem 2
+          q.select "> button", [
+            q.width q.hrem 32
+            q.padding "1rem 1rem"
+
+            q.select "> img", [
+              q.width q.px 32
+              q.height q.px 32
+              q.margin right: q.hrem 2
+            ] ] ] ] ]
+
+    ] ]
 
 export default css
