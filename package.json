@@ -1,6 +1,6 @@
 {
   "name": "@dashkite/breeze-client",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Web Component and OAuth handler for use with the Breeze authentication API",
   "main": "build/src/index.js",
   "main:coffee": "src/index.coffee",
