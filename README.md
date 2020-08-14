@@ -25,13 +25,14 @@ To handle the OAuth redirect, add an appropriate route and call combinators to a
 
 The Breeze Client uses `@dashkite/helium` to reference singleton configuration across the application modules.
 
+#### configuration:breeze 
+
 ```yaml
-breeze:
-  api: URL for the Breeze API or compatible.
-  authority: Name of the capability authority.
-  redirectURL: Return URL when redirected back from OAuth identity provider.
-  entry: Name for the entry tag the application profile is stored under.
-  entryDisplayName: Human-friendly name of the entry.
+api: URL for the Breeze API or compatible.
+authority: Name of the capability authority.
+redirectURL: Return URL when redirected back from OAuth identity provider.
+entry: Name for the entry tag the application profile is stored under.
+entryDisplayName: Human-friendly name of the entry.
 ```
 
 ### Example: Authentication
