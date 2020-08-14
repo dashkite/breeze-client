@@ -1,10 +1,10 @@
 import {flow, curry, rtee} from "@pandastrike/garden"
+import Registry from "@dashkite/helium"
 import * as k from "@dashkite/katana"
 import * as c from "@dashkite/carbon"
 import * as r from "../../resources"
 import html from "./html.pug"
 import css from "./css"
-import cf from "../../configuration"
 
 class extends c.Handle
 
@@ -21,7 +21,7 @@ class extends c.Handle
           c.target
           k.spush (target) ->
             service: target.name
-            redirectURL: cf.oauth.redirectURL
+            redirectURL: (Registry.get "configuration:breeze").redirectURL
           flow [
             k.push r.OAuth.get
             k.log "url"

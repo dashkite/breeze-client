@@ -23,6 +23,7 @@
   "homepage": "https://github.com/dashkite/breeze-client#readme",
   "dependencies": {
     "@dashkite/carbon": "^3.3.1",
+    "@dashkite/helium": "^0.3.0",
     "@dashkite/katana": "^0.3.1",
     "@dashkite/mercury": "0.0.20",
     "@dashkite/mercury-sky": "0.0.4",

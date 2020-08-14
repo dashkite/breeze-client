@@ -1,5 +1,5 @@
 import Zinc from "@dashkite/zinc"
-import c from "configuration"
+import Registry from "@dashkite/helium"
 
 Profile =
 
@@ -8,17 +8,22 @@ Profile =
     await profile.store()
     Zinc.current = profile
 
-  create: (nickname) ->
-    profile = await Zinc.createAdjunct c.breeze.authority, {nickname}
+  create: ->
+    c = Registry.get "configuration:breeze"
+    profile = await Zinc.createAdjunct c.authority
 
   get: ->
-    if (profile = await Zinc.getAdjunct c.breeze.authority)?
+    c = Registry.get "configuration:breeze"
+    if (profile = await Zinc.getAdjunct c.authority)?
       profile
 
-  exists: -> (await Zinc.getAdjunct c.breeze.authority)?
+  exists: ->
+    c = Registry.get "configuration:breeze"
+    (await Zinc.getAdjunct c.authority)?
 
   delete: ->
-    if (profile = await Zinc.getAdjunct c.breeze.authority)?
+    c = Registry.get "configuration:breeze"
+    if (profile = await Zinc.getAdjunct c.authority)?
       profile.delete()
 
 export default Profile
