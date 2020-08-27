@@ -24,6 +24,10 @@ class extends c.Handle
             redirectURL: (Registry.get "configuration:breeze").redirectURL
           flow [
             k.push r.OAuth.get
-            k.log "url"
             k.peek (url) -> window.location.assign url
-          ] ] ] ] ]
+      ] ] ]
+
+      c.event "submit", [
+        c.intercept
+      ]
+  ] ]
