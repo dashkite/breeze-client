@@ -22,13 +22,13 @@
   },
   "homepage": "https://github.com/dashkite/breeze-client#readme",
   "dependencies": {
-    "@dashkite/carbon": "^3.3.1",
+    "@dashkite/carbon": "^4.0.0",
     "@dashkite/helium": "^0.3.0",
     "@dashkite/katana": "^0.3.1",
     "@dashkite/mercury": "0.0.20",
     "@dashkite/mercury-sky": "0.0.4",
     "@dashkite/mercury-zinc": "^0.1.0",
-    "@dashkite/quark": "^0.3.2",
+    "@dashkite/quark": "^1.0.0",
     "@dashkite/zinc": "^0.1.0",
     "@pandastrike/garden": "^8.0.0-alpha.1"
   }

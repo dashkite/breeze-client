@@ -11,7 +11,10 @@ class extends c.Handle
   c.mixin @, [
     c.tag "breeze-connect"
     c.diff
-    c.initialize [ c.shadow, c.sheet css ]
+    c.initialize [
+      c.shadow
+      c.sheet "main", css 
+    ]
     c.connect [
       c.activate [
         c.render html
