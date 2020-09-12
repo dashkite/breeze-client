@@ -31,5 +31,8 @@
     "@dashkite/quark": "^1.0.1",
     "@dashkite/zinc": "^0.1.2",
     "@pandastrike/garden": "^8.0.1"
+  },
+  "devDependencies": {
+    "panda-garden": "^5.0.0"
   }
 }
