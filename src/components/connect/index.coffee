@@ -4,6 +4,7 @@ import * as k from "@dashkite/katana"
 import * as c from "@dashkite/carbon"
 import * as r from "../../resources"
 import html from "./html.pug"
+import waiting from "./waiting.pug"
 import css from "./css"
 
 class extends c.Handle
@@ -13,7 +14,7 @@ class extends c.Handle
     c.diff
     c.initialize [
       c.shadow
-      c.sheet "main", css 
+      c.sheet "main", css
     ]
     c.connect [
       c.activate [
@@ -26,6 +27,7 @@ class extends c.Handle
             service: target.name
             redirectURL: (Registry.get "configuration:breeze").redirectURL
           flow [
+            c.render waiting
             k.push r.OAuth.get
             k.peek (url) -> window.location.assign url
       ] ] ]
