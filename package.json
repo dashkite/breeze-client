@@ -22,14 +22,18 @@
   },
   "homepage": "https://github.com/dashkite/breeze-client#readme",
   "dependencies": {
-    "@dashkite/carbon": "4.1.0-beta.4",
-    "@dashkite/helium": "^0.3.0",
-    "@dashkite/katana": "^0.3.2",
-    "@dashkite/mercury": "0.1.2",
-    "@dashkite/mercury-sky": "0.0.6",
-    "@dashkite/mercury-zinc": "0.1.3",
-    "@dashkite/quark": "1.3.0-beta.4",
-    "@dashkite/zinc": "0.1.3",
+    "@dashkite/carbon": "4.1.1-beta.6",
+    "@dashkite/helium": "^0.4.1",
+    "@dashkite/katana": "^0.4.8",
+    "@dashkite/mercury": "0.2.4",
+    "@dashkite/mercury-sky": "0.1.1",
+    "@dashkite/mercury-zinc": "0.2.0",
+    "@dashkite/quark": "1.3.0-beta.8",
+    "@dashkite/zinc": "0.2.0",
     "@pandastrike/garden": "^8.0.1"
+  },
+  "devDependencies": {
+    "@dashkite/genie": "^0.5.4",
+    "@dashkite/genie-presets": "^0.4.10"
   }
 }
