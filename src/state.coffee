@@ -4,4 +4,4 @@ logout = p.delete
 
 connected = p.exists
 
-export {logout, connected}
+export {logout, connected, p as profile}

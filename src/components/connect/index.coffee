@@ -1,17 +1,21 @@
 import {flow, curry, rtee} from "@pandastrike/garden"
+import Registry from "@dashkite/helium"
 import * as k from "@dashkite/katana"
 import * as c from "@dashkite/carbon"
 import * as r from "../../resources"
 import html from "./html.pug"
+import waiting from "./waiting.pug"
 import css from "./css"
-import cf from "../../configuration"
 
 class extends c.Handle
 
   c.mixin @, [
     c.tag "breeze-connect"
     c.diff
-    c.initialize [ c.shadow, c.sheet css ]
+    c.initialize [
+      c.shadow
+      c.sheet "main", css
+    ]
     c.connect [
       c.activate [
         c.render html
@@ -21,9 +25,14 @@ class extends c.Handle
           c.target
           k.spush (target) ->
             service: target.name
-            redirectURL: cf.oauth.redirectURL
+            redirectURL: (Registry.get "configuration:breeze").redirectURL
           flow [
+            c.render waiting
             k.push r.OAuth.get
-            k.log "url"
             k.peek (url) -> window.location.assign url
-          ] ] ] ] ]
+      ] ] ]
+
+      c.event "submit", [
+        c.intercept
+      ]
+  ] ]

@@ -1,6 +1,6 @@
 {
   "name": "@dashkite/breeze-client",
-  "version": "0.2.0",
+  "version": "1.0.4-beta.3",
   "description": "Web Component and OAuth handler for use with the Breeze authentication API",
   "main": "build/src/index.js",
   "main:coffee": "src/index.coffee",
@@ -22,17 +22,14 @@
   },
   "homepage": "https://github.com/dashkite/breeze-client#readme",
   "dependencies": {
-    "@dashkite/carbon": "^3.3.1",
-    "@dashkite/katana": "^0.3.1",
-    "@dashkite/mercury": "0.0.20",
-    "@dashkite/mercury-sky": "0.0.4",
-    "@dashkite/mercury-zinc": "^0.1.0",
-    "@dashkite/quark": "^0.3.2",
-    "@dashkite/zinc": "^0.1.0",
-    "@pandastrike/garden": "^8.0.0-alpha.1"
-  },
-  "devDependencies": {
-    "@dashkite/genie": "^0.3.3",
-    "@dashkite/genie-presets": "^0.1.2"
+    "@dashkite/carbon": "4.1.0-beta.4",
+    "@dashkite/helium": "^0.3.0",
+    "@dashkite/katana": "^0.3.2",
+    "@dashkite/mercury": "0.1.2",
+    "@dashkite/mercury-sky": "0.0.6",
+    "@dashkite/mercury-zinc": "0.1.3",
+    "@dashkite/quark": "1.3.0-beta.4",
+    "@dashkite/zinc": "0.1.3",
+    "@pandastrike/garden": "^8.0.1"
   }
 }

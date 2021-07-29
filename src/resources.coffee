@@ -1,14 +1,21 @@
 import {flow, curry, tee} from "@pandastrike/garden"
+import Registry from "@dashkite/helium"
 import * as m from "@dashkite/mercury"
+import * as k from "@dashkite/katana"
 import s from "@dashkite/mercury-sky"
 import z from "@dashkite/mercury-zinc"
 import p from "./profile"
-import c from "./configuration"
 import {get} from "./helpers"
+
+HeRead = (field) ->
+  -> Registry.get("configuration:breeze")[field]
 
 initialize = flow [
   m.use m.Fetch.client mode: "cors"
-  s.discover c.breeze.api
+  m.from [
+    HeRead "api"
+    s.discover
+  ]
 ]
 
 fetchAPIKey = flow [
@@ -24,6 +31,13 @@ fetchAPIKey = flow [
   ]
 ]
 
+loadGrants = k.stack flow [
+  k.push (json) -> json
+  k.push fetchAPIKey
+  k.push HeRead "authority"
+  k.mpoke (authority, key, data) -> z.grants authority, key, data
+]
+
 Profiles =
   post: flow [
     initialize
@@ -34,15 +48,13 @@ Profiles =
       m.content
     ]
     m.from [
-      z.sigil c.breeze.authority
+      HeRead "authority"
+      z.sigil
       m.authorize
     ]
     s.request
     m.json
-    m.from [
-      fetchAPIKey
-      z.grants c.breeze.authority
-    ]
+    loadGrants
     get "json"
   ]
 
@@ -60,7 +72,8 @@ Identities =
       m.content
     ]
     m.from [
-      z.claim c.breeze.authority
+      HeRead "authority"
+      z.claim
       m.authorize
     ]
     s.request
@@ -77,7 +90,11 @@ Authentication =
       m.data [ "token" ]
       m.content
     ]
-    s.request
+    m.request
+  ]
+
+  # Upon successful authentication with Breeze and any HX updates after scrutinzing the response, process the response body and store.
+  parseProfile: flow [
     m.json
     # restore the breeze profile so that
     # we can accept the grants ...
@@ -86,10 +103,7 @@ Authentication =
       get "profile"
       p.createFromJSON
     ]
-    m.from [
-      fetchAPIKey
-      z.grants c.breeze.authority
-    ]
+    loadGrants
     get "json"
   ]
 
@@ -103,10 +117,11 @@ Entries =
       m.parameters
     ]
     m.from [
-      z.claim c.breeze.authority
+      HeRead "authority"
+      z.claim
       m.authorize
     ]
-    s.request
+    m.request
     m.json
     get "json"
   ]
@@ -124,7 +139,8 @@ Entries =
       m.content
     ]
     m.from [
-      z.claim c.breeze.authority
+      HeRead "authority"
+      z.claim
       m.authorize
     ]
     s.request
@@ -142,10 +158,11 @@ Entry =
       m.parameters
     ]
     m.from [
-      z.claim c.breeze.authority
+      HeRead "authority"
+      z.claim
       m.authorize
     ]
-    s.request
+    m.request
     m.json
     get "json"
   ]
@@ -160,7 +177,8 @@ Tag =
       m.parameters
     ]
     m.from [
-      z.claim c.breeze.authority
+      HeRead "authority"
+      z.claim
       m.authorize
     ]
     s.request
