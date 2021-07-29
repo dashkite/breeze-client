@@ -30,5 +30,9 @@
     "@dashkite/quark": "^0.3.2",
     "@dashkite/zinc": "^0.1.0",
     "@pandastrike/garden": "^8.0.0-alpha.1"
+  },
+  "devDependencies": {
+    "@dashkite/genie": "^0.3.3",
+    "@dashkite/genie-presets": "^0.1.2"
   }
 }
