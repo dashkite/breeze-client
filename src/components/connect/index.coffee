@@ -1,31 +1,30 @@
-import {flow, curry, rtee} from "@pandastrike/garden"
+import {flow, curry, rtee} from "@dashkite/joy/function"
+import * as M from "@dashkite/joy/metaclass"
 import Registry from "@dashkite/helium"
-import * as k from "@dashkite/katana"
+import * as k from "@dashkite/katana/sync"
 import * as c from "@dashkite/carbon"
 import * as r from "../../resources"
-import html from "./html.pug"
-import waiting from "./waiting.pug"
+import html from "./html"
+import waiting from "./waiting"
 import css from "./css"
 
 class extends c.Handle
 
-  c.mixin @, [
+  M.mixin @, [
     c.tag "breeze-connect"
     c.diff
     c.initialize [
       c.shadow
-      c.sheet "main", css
-    ]
-    c.connect [
+      c.sheets main: css
       c.activate [
         c.render html
       ]
       c.event "click", [
-        c.matches "button", [
-          c.target
-          k.spush (target) ->
+        c.within "button", [
+          k.push (target) ->
+            breeze = await Registry.get "breeze"
             service: target.name
-            redirectURL: (Registry.get "configuration:breeze").redirectURL
+            redirectURL: breeze.redirectURL
           flow [
             c.render waiting
             k.push r.OAuth.get

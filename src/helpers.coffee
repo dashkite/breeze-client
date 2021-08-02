@@ -1,4 +1,4 @@
-import {arity, curry} from "@pandastrike/garden"
+import {arity, curry} from "@dashkite/joy/function"
 
 _not = (predicate) ->
   arity predicate.length, (ax...) ->

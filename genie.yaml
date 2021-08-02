@@ -1,5 +1,35 @@
 presets:
-  coffeescript: ~
-  verify: ~
-  update: ~
-  release: ~
+  coffeescript:
+    targets:
+      browser:
+        - preset: browser
+          glob:
+            - src/**/*.coffee
+        - preset: browser
+          glob:
+            - test/client/**/*.coffee
+          options:
+            mode: debug
+        - preset: node
+          glob:
+            - test/**/*.coffee
+            - '!test/client/**/*.coffee'
+  verify: null
+  update: null
+  release: null
+  pug:
+    targets:
+      app:
+        - preset: compile
+          glob:
+            - src/**/*.pug
+  stylus:
+    targets:
+      browser:
+        - preset: js
+          glob:
+            - src/**/*.styl
+  server:
+    logging: false
+    fallback: ./build/browser/src/index.html
+  esm: null

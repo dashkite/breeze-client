@@ -1,96 +1,98 @@
-import {flow, curry, tee} from "@pandastrike/garden"
+import {flow, curry, tee} from "@dashkite/joy/function"
+import { getter } from "@dashkite/joy/metaclass"
 import Registry from "@dashkite/helium"
 import * as m from "@dashkite/mercury"
 import * as k from "@dashkite/katana"
-import s from "@dashkite/mercury-sky"
-import z from "@dashkite/mercury-zinc"
+import * as s from "@dashkite/mercury-sky"
+import * as z from "@dashkite/mercury-zinc"
 import p from "./profile"
-import {get} from "./helpers"
 
-HeRead = (field) ->
-  -> Registry.get("configuration:breeze")[field]
+mask = curry (fields, object) ->
+  r = {}
+  for field in fields
+    r[field] = object[field]
+  r
+
+data = (fields) ->
+  flow [
+    k.read "data"
+    k.poke mask fields
+  ]
+
+He =
+  read: (field) -> -> Registry.get("configuration:breeze")[field]
 
 initialize = flow [
-  m.use m.Fetch.client mode: "cors"
-  m.from [
-    HeRead "api"
-    s.discover
-  ]
+  m.mode "cors"
+  k.push He.read "api"
+  s.discover
 ]
 
 fetchAPIKey = flow [
-  initialize
-  s.resource "public keys"
-  m.parameters type: "encryption"
-  m.accept "text/plain"
-  s.method "get"
-  m.cache flow [
-    s.request
-    m.text
-    get "text"
+  m.request [
+    initialize
+    s.resource "public keys"
+    m.parameters type: "encryption"
+    m.accept "text/plain"
+    s.method "get"
+    m.cache "breeze"
   ]
+  m.text
+  k.get
 ]
 
-loadGrants = k.stack flow [
+loadGrants = tee flow [
   k.push (json) -> json
   k.push fetchAPIKey
-  k.push HeRead "authority"
+  k.push He.read "authority"
   k.mpoke (authority, key, data) -> z.grants authority, key, data
 ]
 
 Profiles =
   post: flow [
-    initialize
-    s.resource "profiles"
-    s.method "post"
-    m.from [
-      m.data [ "nickname", "profile" ]
+    m.request [
+      initialize
+      s.resource "profiles"
+      s.method "post"
+      data [ "nickname", "profile" ]
       m.content
-    ]
-    m.from [
-      HeRead "authority"
+      k.push He.read "authority"
       z.sigil
       m.authorize
     ]
-    s.request
     m.json
     loadGrants
-    get "json"
+    k.get
   ]
 
 Identities =
   post: flow [
-    initialize
-    s.resource "identities"
-    s.method "post"
-    m.from [
-      m.data [ "nickname" ]
+    m.request [
+      initialize
+      s.resource "identities"
+      s.method "post"
+      data [ "nickname" ]
       m.parameters
-    ]
-    m.from [
-      m.data [ "token" ]
+      # TODO do we need to re-read data here?
+      data [ "token" ]
       m.content
-    ]
-    m.from [
-      HeRead "authority"
+      k.push He.read "authority"
       z.claim
       m.authorize
     ]
-    s.request
     m.json
-    get "json"
+    k.get
   ]
 
 Authentication =
   post: flow [
-    initialize
-    s.resource "authentication"
-    s.method "post"
-    m.from [
-      m.data [ "token" ]
+    m.request [
+      initialize
+      s.resource "authentication"
+      s.method "post"
+      data [ "token" ]
       m.content
     ]
-    m.request
   ]
 
   # Upon successful authentication with Breeze and any HX updates after scrutinzing the response, process the response body and store.
@@ -99,104 +101,92 @@ Authentication =
     # restore the breeze profile so that
     # we can accept the grants ...
     tee flow [
-      get "json"
-      get "profile"
+      getter "json"
+      getter "profile"
       p.createFromJSON
     ]
     loadGrants
-    get "json"
+    k.get
   ]
 
 Entries =
   get: flow [
-    initialize
-    s.resource "entries"
-    s.method "get"
-    m.from [
-      m.data [ "nickname", "tag" ]
+    m.request [
+      initialize
+      s.resource "entries"
+      s.method "get"
+      data  [ "nickname", "tag" ]
       m.parameters
-    ]
-    m.from [
-      HeRead "authority"
+      k.push He.read "authority"
       z.claim
       m.authorize
     ]
-    m.request
     m.json
-    get "json"
+    k.get
   ]
 
   post: flow [
-    initialize
-    s.resource "entries"
-    s.method "post"
-    m.from [
-      m.data [ "nickname" ]
+    m.request [
+      initialize
+      s.resource "entries"
+      s.method "post"
+      data [ "nickname" ]
       m.parameters
-    ]
-    m.from [
-      m.data [ "content", "displayName" ]
+      data [ "content", "displayName" ]
       m.content
-    ]
-    m.from [
-      HeRead "authority"
+      k.push He.read "authority"
       z.claim
       m.authorize
     ]
-    s.request
     m.json
-    get "json"
+    k.get
   ]
 
 Entry =
   get: flow [
-    initialize
-    s.resource "entry"
-    s.method "get"
-    m.from [
-      m.data [ "nickname", "id" ]
+    m.request [
+      initialize
+      s.resource "entry"
+      s.method "get"
+      data [ "nickname", "id" ]
       m.parameters
-    ]
-    m.from [
-      HeRead "authority"
+      k.push He.read "authority"
       z.claim
       m.authorize
     ]
-    m.request
     m.json
-    get "json"
+    k.get
   ]
 
 Tag =
   put: flow [
-    initialize
-    s.resource "tag"
-    s.method "put"
-    m.from [
-      m.data [ "nickname", "id", "tag" ]
+    m.request [
+      initialize
+      s.resource "tag"
+      s.method "put"
+      data [ "nickname", "id", "tag" ]
       m.parameters
-    ]
-    m.from [
-      HeRead "authority"
+      k.push He.read "authority"
       z.claim
       m.authorize
     ]
-    s.request
   ]
 
 # in this case, we aren't making the request,
 # we just need to build up the URL based on discovery
+# TODO this won't work since currently Mercury doesn't allow
+# for a request to be created without being run :/
 OAuth =
   get: flow [
-    initialize
-    s.resource "oauth authentication"
-    s.method "get"
-    m.from [
-      m.data [ "service", "redirectURL" ]
+    m.request [
+      initialize
+      s.resource "oauth authentication"
+      s.method "get"
+      data [ "service", "redirectURL" ]
       m.parameters
     ]
-    get "url"
-    get "href"
+    getter "url"
+    getter "href"
   ]
 
 export {Profiles, Identities, Authentication, Entries, Entry, Tag, OAuth}

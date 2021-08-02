@@ -1,4 +1,4 @@
-import {curry, binary, tee, flow} from "@pandastrike/garden"
+import {curry, binary, tee, flow} from "@dashkite/joy/function"
 import * as k from "@dashkite/katana"
 import * as m from "@dashkite/mercury"
 import {confidential} from "panda-confidential"
