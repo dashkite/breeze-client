@@ -1,7 +1,8 @@
 import {flow, curry, rtee} from "@dashkite/joy/function"
 import * as M from "@dashkite/joy/metaclass"
 import Registry from "@dashkite/helium"
-import * as k from "@dashkite/katana/sync"
+import * as Ks from "@dashkite/katana/sync"
+import * as K from "@dashkite/katana/async"
 import * as c from "@dashkite/carbon"
 import * as r from "../../resources"
 import html from "./html"
@@ -21,14 +22,16 @@ class extends c.Handle
       ]
       c.event "click", [
         c.within "button", [
-          k.push (target) ->
+          Ks.push (target) ->
             breeze = await Registry.get "breeze"
             service: target.name
             redirectURL: breeze.redirectURL
           flow [
             c.render waiting
-            k.push r.OAuth.get
-            k.peek (url) -> window.location.assign url
+            K.push r.OAuth.get
+            K.peek (url) -> 
+              console.log {url}
+              window.location.assign url
       ] ] ]
 
       c.event "submit", [

@@ -1,5 +1,5 @@
-import {flow, curry, tee} from "@dashkite/joy/function"
-import { getter } from "@dashkite/joy/metaclass"
+import {flow, pipe, curry, tee} from "@dashkite/joy/function"
+import { get } from "@dashkite/joy/object"
 import Registry from "@dashkite/helium"
 import * as m from "@dashkite/mercury"
 import * as k from "@dashkite/katana"
@@ -13,29 +13,34 @@ mask = curry (fields, object) ->
     r[field] = object[field]
   r
 
+# TODO use version in Mercury once published
 data = (fields) ->
   flow [
     k.read "data"
     k.poke mask fields
   ]
 
-He =
-  read: (field) -> -> Registry.get("configuration:breeze")[field]
+# TODO read function for Helium?
+# ex: await Registry.read [ "breeze", "api" ]
+# ex: await Registry.read "breeze.api"
 
-initialize = flow [
-  m.mode "cors"
+He =
+  read: (field) -> -> (await Registry.get "breeze")[field]
+
+initialize = k.assign [
   k.push He.read "api"
   s.discover
 ]
 
-fetchAPIKey = flow [
-  m.request [
-    initialize
+fetchAPIKey = m.start [
+  initialize
+  pipe [
     s.resource "public keys"
     m.parameters type: "encryption"
     m.accept "text/plain"
     s.method "get"
     m.cache "breeze"
+    m.request
   ]
   m.text
   k.get
@@ -49,60 +54,63 @@ loadGrants = tee flow [
 ]
 
 Profiles =
-  post: flow [
-    m.request [
-      initialize
+
+  post: m.start [
+    initialize
+    pipe [
       s.resource "profiles"
       s.method "post"
-      data [ "nickname", "profile" ]
       m.content
-      k.push He.read "authority"
-      z.sigil
-      m.authorize
+      # TODO can we avoid this?
+      m.parameters {}
     ]
+    k.push He.read "authority"
+    z.sigil
+    m.authorize
+    m.request
     m.json
     loadGrants
     k.get
   ]
 
 Identities =
-  post: flow [
-    m.request [
-      initialize
+
+  post: m.start [
+    initialize
+    pipe [
       s.resource "identities"
       s.method "post"
-      data [ "nickname" ]
       m.parameters
-      # TODO do we need to re-read data here?
-      data [ "token" ]
       m.content
-      k.push He.read "authority"
-      z.claim
-      m.authorize
     ]
+    k.push He.read "authority"
+    z.claim
+    m.authorize
+    m.request
     m.json
     k.get
   ]
 
 Authentication =
-  post: flow [
-    m.request [
-      initialize
+  post: m.start [
+    initialize
+    pipe [
       s.resource "authentication"
       s.method "post"
-      data [ "token" ]
       m.content
     ]
+    m.request
   ]
 
-  # Upon successful authentication with Breeze and any HX updates after scrutinzing the response, process the response body and store.
+  # Upon successful authentication with Breeze and any HX updates after
+  # scrutinzing the response, process the response body and store.
   parseProfile: flow [
     m.json
     # restore the breeze profile so that
     # we can accept the grants ...
     tee flow [
-      getter "json"
-      getter "profile"
+      k.get
+      get "profile"
       p.createFromJSON
     ]
     loadGrants
@@ -110,83 +118,88 @@ Authentication =
   ]
 
 Entries =
-  get: flow [
-    m.request [
-      initialize
+
+  get: m.start [
+    initialize
+    pipe [
       s.resource "entries"
       s.method "get"
-      data  [ "nickname", "tag" ]
       m.parameters
-      k.push He.read "authority"
-      z.claim
-      m.authorize
     ]
+    k.push He.read "authority"
+    z.claim
+    m.authorize
+    m.request
     m.json
     k.get
   ]
 
-  post: flow [
-    m.request [
-      initialize
+  post: m.start [
+    initialize
+    pipe [
       s.resource "entries"
       s.method "post"
       data [ "nickname" ]
       m.parameters
       data [ "content", "displayName" ]
       m.content
-      k.push He.read "authority"
-      z.claim
-      m.authorize
     ]
+    k.push He.read "authority"
+    z.claim
+    m.authorize
+    m.request
     m.json
     k.get
   ]
 
 Entry =
-  get: flow [
-    m.request [
-      initialize
+
+  get: m.start [
+    initialize
+    pipe [
       s.resource "entry"
       s.method "get"
-      data [ "nickname", "id" ]
       m.parameters
-      k.push He.read "authority"
-      z.claim
-      m.authorize
     ]
+    k.push He.read "authority"
+    z.claim
+    m.authorize
+    m.request
     m.json
     k.get
   ]
 
 Tag =
-  put: flow [
-    m.request [
-      initialize
+
+  put: m.start [
+    initialize
+    pipe [
       s.resource "tag"
       s.method "put"
-      data [ "nickname", "id", "tag" ]
       m.parameters
-      k.push He.read "authority"
-      z.claim
-      m.authorize
     ]
+    k.push He.read "authority"
+    z.claim
+    m.authorize
+    m.request
   ]
 
-# in this case, we aren't making the request,
-# we just need to build up the URL based on discovery
-# TODO this won't work since currently Mercury doesn't allow
-# for a request to be created without being run :/
+# In this case, we aren't making the request, we just need to build up the URL
+# based on discovery
+
 OAuth =
-  get: flow [
-    m.request [
-      initialize
+
+  get: m.start [
+    initialize
+    pipe [
       s.resource "oauth authentication"
       s.method "get"
-      data [ "service", "redirectURL" ]
       m.parameters
     ]
-    getter "url"
-    getter "href"
+    k.context
+    k.get
+    get "url"
+    get "href"
   ]
 
 export {Profiles, Identities, Authentication, Entries, Entry, Tag, OAuth}

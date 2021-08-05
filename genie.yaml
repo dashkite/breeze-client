@@ -23,13 +23,21 @@ presets:
         - preset: compile
           glob:
             - src/**/*.pug
+      test:
+        - preset: render
+          glob: test/client/index.pug
+          document: true
+          options:
+            import-map:
+              '@dashkite/amen': latest
+              '@dashkite/assert': latest
   stylus:
     targets:
       browser:
         - preset: js
           glob:
             - src/**/*.styl
-  server:
+  browser:
     logging: false
-    fallback: ./build/browser/src/index.html
+    fallback: ./build/browser/test/client/index.html
   esm: null
