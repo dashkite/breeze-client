@@ -13,13 +13,6 @@ mask = curry (fields, object) ->
     r[field] = object[field]
   r
 
-# TODO use version in Mercury once published
-data = (fields) ->
-  flow [
-    k.read "data"
-    k.poke mask fields
-  ]
-
 # TODO read function for Helium?
 # ex: await Registry.read [ "breeze", "api" ]
 # ex: await Registry.read "breeze.api"
@@ -139,9 +132,9 @@ Entries =
     pipe [
       s.resource "entries"
       s.method "post"
-      data [ "nickname" ]
+      m.data [ "nickname" ]
       m.parameters
-      data [ "content", "displayName" ]
+      m.data [ "content", "displayName" ]
       m.content
     ]
     k.push He.read "authority"
@@ -202,4 +195,12 @@ OAuth =
     get "href"
   ]
 
-export {Profiles, Identities, Authentication, Entries, Entry, Tag, OAuth}
+export {
+  Profiles
+  Identities
+  Authentication
+  Entries
+  Entry
+  Tag
+  OAuth
+}

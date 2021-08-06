@@ -32,7 +32,7 @@
     "@dashkite/helium": "^0.4.1",
     "@dashkite/joy": "^0.3.11",
     "@dashkite/katana": "^0.4.8",
-    "@dashkite/mercury": "0.3.0",
+    "@dashkite/mercury": "file:../mercury",
     "@dashkite/mercury-sky": "^0.1.4",
     "@dashkite/mercury-zinc": "^0.3.0",
     "@dashkite/zinc": "^0.3.0"

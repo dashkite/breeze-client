@@ -1,5 +1,8 @@
 import Zinc from "@dashkite/zinc"
 import Registry from "@dashkite/helium"
+import * as Fn from "@dashkite/joy/function"
+import * as T from "@dashkite/joy/type"
+import * as Obj from "@dashkite/joy/object"
 
 Profile =
 
@@ -12,6 +15,7 @@ Profile =
       # Convert it into an adjunct of the Breeze profile.
       appProfile.address = profile.address
       await appProfile.store()
+      # TODO do we need to set this?
       Zinc.current = appProfile
     else
       # No application profile available.
@@ -19,22 +23,26 @@ Profile =
       # management until we get our hands on another profile.
       Zinc.current = profile
 
-  create: ->
-    c = Registry.get "configuration:breeze"
-    profile = await Zinc.createAdjunct c.authority
+  create: Fn.flow [
+    Registry.get "breeze.authority"
+    Zinc.createAdjunct
+  ]
 
-  get: ->
-    c = Registry.get "configuration:breeze"
-    if (profile = await Zinc.getAdjunct c.authority)?
-      profile
+  get: Fn.flow [
+    Registry.get "breeze.authority"
+    Zinc.getAdjunct
+  ]
 
-  exists: ->
-    c = Registry.get "configuration:breeze"
-    (await Zinc.getAdjunct c.authority)?
+  exists: Fn.flow [
+    Registry.get "breeze.authority"
+    Zinc.getAdjunct
+    T.isDefined
+  ]
 
-  delete: ->
-    c = Registry.get "configuration:breeze"
-    if (profile = await Zinc.getAdjunct c.authority)?
-      profile.delete()
+  exists: Fn.flow [
+    Registry.get "breeze.authority"
+    Zinc.getAdjunct
+    P.test T.isDefined, Fn.send "delete", []
+  ]
 
-export default Profile
+export { Profile }
