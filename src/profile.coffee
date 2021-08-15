@@ -1,6 +1,7 @@
 import Zinc from "@dashkite/zinc"
 import Registry from "@dashkite/helium"
 import * as Fn from "@dashkite/joy/function"
+import * as Pr from "@dashkite/joy/predicate"
 import * as T from "@dashkite/joy/type"
 import * as Obj from "@dashkite/joy/object"
 
@@ -24,25 +25,25 @@ Profile =
       Zinc.current = profile
 
   create: Fn.flow [
-    Registry.get "breeze.authority"
+    Fn.wrap Registry.get "breeze.authority"
     Zinc.createAdjunct
   ]
 
   get: Fn.flow [
-    Registry.get "breeze.authority"
+    Fn.wrap Registry.get "breeze.authority"
     Zinc.getAdjunct
   ]
 
   exists: Fn.flow [
-    Registry.get "breeze.authority"
+    Fn.wrap Registry.get "breeze.authority"
     Zinc.getAdjunct
     T.isDefined
   ]
 
-  exists: Fn.flow [
-    Registry.get "breeze.authority"
+  delete: Fn.flow [
+    Fn.wrap Registry.get "breeze.authority"
     Zinc.getAdjunct
-    P.test T.isDefined, Fn.send "delete", []
+    Pr.test T.isDefined, Fn.send "delete", []
   ]
 
 export { Profile }

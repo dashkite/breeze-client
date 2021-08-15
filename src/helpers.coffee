@@ -4,7 +4,7 @@ import * as Obj from "@dashkite/joy/object"
 import * as k from "@dashkite/katana"
 import * as m from "@dashkite/mercury"
 import {confidential} from "panda-confidential"
-import p from "./profile"
+import { Profile } from "./profile"
 import * as r from "./resources"
 
 {randomBytes, convert} = confidential()
@@ -13,9 +13,9 @@ import * as r from "./resources"
 # TODO perhaps change terminology in breeze API
 #      to use address instead of nickname
 
-createProfile = k.test (P.negate p.exists),
+createProfile = k.test (P.negate Profile.exists),
   k.peek Fn.flow [
-    p.create
+    Profile.create
     (profile) ->
       nickname: profile.address
       profile: profile.toJSON()
@@ -23,7 +23,7 @@ createProfile = k.test (P.negate p.exists),
   ]
 
 addIdentity = Fn.tee Fn.flow [
-  k.push p.get
+  k.push Profile.get
   k.poke (profile, token) ->
     nickname: profile.address
     token: token
@@ -40,7 +40,7 @@ authenticate = k.push (token) -> r.Authentication.post { token }
 load = k.poke r.Authentication.parseProfile
 
 getNickname = Fn.flow [
-  p.get
+  Profile.get
   Obj.get "address"
 ]
 
