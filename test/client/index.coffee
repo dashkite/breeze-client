@@ -1,15 +1,13 @@
 import assert from "@dashkite/assert"
 import { test } from "@dashkite/amen"
-import * as $ from "@dashkite/breeze-client"
+import "@dashkite/breeze-client"
+import Profile from "@dashkite/zinc"
 
 do ->
-
-  window.__test = await do ->
-
-    test "Profile", [
-
-      test "Register", ->
-
-        assert $.register?
-
-    ]
+  console.log "application loaded"
+  document
+    .querySelector "breeze-connect"
+    .addEventListener "success", ->
+      console.log "success!"
+      window.__profile = await Profile.current
+      window.__success = window.__profile?

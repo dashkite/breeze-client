@@ -37,7 +37,18 @@ presets:
         - preset: js
           glob:
             - src/**/*.styl
+  esm: null
+  yaml:
+    targets:
+      node:
+        - preset: json
+          glob: test/credentials.yaml
   browser:
     logging: false
     fallback: ./build/browser/test/client/index.html
-  esm: null
+    esm:
+      directories:
+        - .
+        - ..
+        - ../../pandastrike
+        - ../stablelib/packages

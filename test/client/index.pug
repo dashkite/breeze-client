@@ -6,4 +6,8 @@ html
     script( src="/build/browser/test/client/index.js" type="module" )
 
   body
-    //- intentionally left blank
+    breeze-connect(
+      data-display-name = "Breeze Connect Test"
+      data-authority = "test-api.dashkite.com"
+      data-mode = "development"
+    )

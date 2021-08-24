@@ -48,7 +48,7 @@ Profiles =
       # TODO can we avoid this?
       m.parameters {}
     ]
-    m.data [ "authority" ]
+    m.data "authority"
     z.sigil
     m.authorize
     m.request
@@ -64,10 +64,12 @@ Identities =
     pipe [
       s.resource "identities"
       s.method "post"
+      m.data [ "nickname" ]
       m.parameters
+      m.data [ "token" ]
       m.content
     ]
-    m.data [ "authority" ]
+    m.data "authority"
     z.claim
     m.authorize
     m.request
@@ -82,6 +84,7 @@ Authentication =
       s.resource "authentication"
       s.method "post"
       m.data [ "token" ]
+      K.peek ({token}) -> console.log "token", token
       m.content
       m.parameters {}
     ]
@@ -139,7 +142,7 @@ Entry =
       s.method "get"
       m.parameters
     ]
-    m.data [ "authority" ]
+    m.data "authority"
     z.claim
     m.authorize
     m.request
