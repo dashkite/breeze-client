@@ -172,8 +172,7 @@ actions =
       id: entry.id
       tag: data.authorities.application
     K.pop R.Tag.put
-    K.push Fn.wrap "success"
-    _run
+    run "success"
   ]
 
   "save entry as local profile": Fn.flow [
@@ -187,10 +186,9 @@ actions =
       nickname: entry.nickname
       id: entry.id
     K.poke R.Entry.get
-    K.push (entry) -> Profile.fromJSON entry.content
+    K.push (entry) -> Profile.createFromJSON entry.content
     K.peek (profile) -> Profile.current = profile
-    K.push Fn.wrap "success"
-    _run
+    run "success"
   ]
   
   "reconcile entries": Fn.flow [
