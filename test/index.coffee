@@ -1,6 +1,6 @@
 import FS from "fs/promises"
 import Path from "path"
-import { test, success } from "@dashkite/amen"
+import * as Amen from "@dashkite/amen"
 import print from "@dashkite/amen-console"
 
 import * as _ from "@dashkite/joy"
@@ -38,48 +38,88 @@ do browse ({browser, port}) ->
   await FS.rm paths.screenshots, recursive: true, force: true
   await FS.mkdir paths.screenshots
 
-  print await test "Breeze Client", [
+  state = undefined
 
-    test
-      description: "No existing profile"
-      wait: false
-      ->
-        await do m.launch browser, [
-          m.page
-          m.goto "http://localhost:#{port}/"
-          # m.waitFor -> window.__test?
-          # m.evaluate -> window.__test
-          # k.get
-          m.defined "breeze-connect"
-          screenshot()
-          m.select "breeze-connect"
-          m.shadow
-          # we only support google in this graph
-          # TODO maybe have conditional flows for each provider?
-          m.select "button[name='github']"
-          m.click
-          navigate
-          screenshot()
-          m.select "input[type='text']"
-          m.type credentials.login
-          m.select "input[type='password']"
-          m.type credentials.password
-          m.select "form"
-          m.submit
-          # redirect notification from provider
-          navigate
-          screenshot()
-          # back to our test client
-          navigate
-          screenshot()
-          k.read "page"
-          k.peek (page) ->
-            page.waitForFunction (-> window.__success)
-          # m.waitFor -> window.__success
-          # m.evaluate -> window.__success
-          # m.assert true
-        ]
+  text = (description) ->
+    r = ""
+    for _k1, _v1 of description
+      r += "#{_k1}: "
+      for _k2, _v2 of _v1
+        if _v2
+          r += "+#{_k2} "
+        else
+          r += "-#{_k2} "
+    r.trim()
 
+  authenticate = _.flow [
+    m.goto "http://localhost:#{port}/"
+    m.defined "breeze-connect"
+    screenshot()
+    m.select "breeze-connect"
+    m.shadow
+    # we only support github for now in this graph
+    m.select "button[name='github']"
+    k.test _.isDefined, _.flow [
+      m.click
+      navigate
+      screenshot()
+      m.select "input[type='text']"
+      m.type credentials.login
+      m.select "input[type='password']"
+      m.type credentials.password
+      m.select "form"
+      m.submit
+      # redirect notification from provider
+      navigate
+      screenshot()
+      # back to our test client
+      navigate
+    ]
+    screenshot()
+    m.waitFor -> window.__success?
+    k.read "page"
+    m.evaluate -> window.__success
+    m.assert true
   ]
 
-  process.exit if success then 0 else 1
+  test = (description) ->
+    Amen.test
+      description: text description
+      wait: false
+      ->
+        state = await do _.flow [
+          -> state
+          k.read "page"
+          k.peek (page) ->
+            page.evaluate ((description) -> window.__describe description),
+              description
+          m.waitFor -> window.__ready
+          authenticate
+        ]
+
+  print await Amen.test "Breeze Client", [
+
+    await Amen.test
+      description: "Set up baseline known-good state"
+      wait: false
+      ->
+        state = await do m.launch browser, [
+          m.page
+          authenticate
+        ]
+
+    Amen.test "state tests", await do ->
+      for i in [0..63]
+        await test
+          local:
+            breeze: (i & 1) != 0
+            app: (i & 2) != 0
+            token: (i & 4) != 0
+          remote:
+            profile: (i & 8) != 0
+            entry: (i & 16) != 0
+            id: (i & 32) != 0
+          
+  ]
+
+  process.exit if Amen.success then 0 else 1

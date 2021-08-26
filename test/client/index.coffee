@@ -3,6 +3,10 @@ import { test } from "@dashkite/amen"
 import "@dashkite/breeze-client"
 import Profile from "@dashkite/zinc"
 
+window.__describe = (description) ->
+  console.log JSON.stringify description
+  window.__ready = true
+
 do ->
   console.log "application loaded"
   document
