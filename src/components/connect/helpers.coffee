@@ -57,7 +57,7 @@ initialize = Fn.flow [
         current: (_current = await Profile.current)?.toObject()
         application: undefined
         breeze: if _current?
-          (await Profile.getAdjunct _authority).toObject()
+          (await Profile.getAdjunct _authority)?.toObject()
     }
 ]
 

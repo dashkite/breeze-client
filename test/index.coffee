@@ -18,10 +18,15 @@ navigate = _.flow [
   k.peek (page) -> page.waitForNavigation waitUntil: "domcontentloaded"
 ]
 
-screenshot = do (counter = 0) -> ->
-  m.screenshot
-    path: "test/screenshots/#{counter++}.jpg"
-    quality: 100
+screenshot = do (counter = 0) -> (name) ->
+  _.flow [
+    k.read "page"
+    k.pop (page) ->
+      page.screenshot
+        path: "test/screenshots/#{counter++}-#{name}.jpg"
+        quality: 100
+        # fullPage: true
+  ]
 
 do browse ({browser, port}) ->
 
@@ -52,30 +57,35 @@ do browse ({browser, port}) ->
     r.trim()
 
   authenticate = _.flow [
-    m.goto "http://localhost:#{port}/"
     m.defined "breeze-connect"
-    screenshot()
+    screenshot "loaded"
+    # wait a beat for the component to figure out where we are
+    # TODO is there a way we can make this more precise?
+    m.sleep 1000
     m.select "breeze-connect"
     m.shadow
     # we only support github for now in this graph
     m.select "button[name='github']"
+    # sometimes github seems to just pass us along
     k.test _.isDefined, _.flow [
       m.click
       navigate
-      screenshot()
+      screenshot "login"
       m.select "input[type='text']"
-      m.type credentials.login
-      m.select "input[type='password']"
-      m.type credentials.password
-      m.select "form"
-      m.submit
-      # redirect notification from provider
-      navigate
-      screenshot()
-      # back to our test client
-      navigate
+      k.test _.isDefined, _.flow [
+        m.type credentials.login
+        m.select "input[type='password']"
+        m.type credentials.password
+        m.select "form"
+        m.submit
+        # redirect notification from provider
+        navigate
+        screenshot "redirect"
+        # back to our test client
+        navigate
+      ]
     ]
-    screenshot()
+    screenshot "done"
     m.waitFor -> window.__success?
     k.read "page"
     m.evaluate -> window.__success
@@ -94,6 +104,12 @@ do browse ({browser, port}) ->
             page.evaluate ((description) -> window.__describe description),
               description
           m.waitFor -> window.__ready
+          k.read "page"
+          k.peek (page) ->
+            if description.local.token
+              page.goto "http://localhost:#{port}/"
+            else
+              page.goto "http://localhost:#{port}?token=12345"
           authenticate
         ]
 
@@ -105,11 +121,15 @@ do browse ({browser, port}) ->
       ->
         state = await do m.launch browser, [
           m.page
+          m.goto "http://localhost:#{port}/"
           authenticate
         ]
 
     Amen.test "state tests", await do ->
-      for i in [0..63]
+      # for i in [0..63]
+      for i in [0..5]
+        # give GitHub a minute
+        await _.sleep 100
         await test
           local:
             breeze: (i & 1) != 0

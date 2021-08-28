@@ -5,7 +5,7 @@ import * as m from "@dashkite/mercury"
 import * as K from "@dashkite/katana"
 import * as s from "@dashkite/mercury-sky"
 import * as z from "@dashkite/mercury-zinc"
-import Profile from "@dashkite/zinc"
+import Zinc from "@dashkite/zinc"
 
 getURL = ({authority}) -> "https://#{authority}"
 
@@ -57,6 +57,21 @@ Profiles =
     K.get
   ]
 
+Profile =
+
+  delete: m.start [
+    initialize
+    pipe [
+      s.resource "profile"
+      s.method "delete"
+      m.data [ "nickname" ]
+      m.parameters
+    ]
+    m.data "authority"
+    z.claim
+    m.authorize
+  ]
+
 Identities =
 
   post: m.start [
@@ -91,9 +106,9 @@ Authentication =
     m.request
     m.json
     K.poke get "profile"
-    K.push Profile.fromJSON
-    K.peek Profile.store
-    K.peek (profile) -> Profile.current = profile
+    K.push Zinc.fromJSON
+    K.peek Zinc.store
+    K.peek (profile) -> Zinc.current = profile
     loadGrants
   ]
 
@@ -186,6 +201,7 @@ OAuth =
 
 export {
   Profiles
+  Profile
   Identities
   Authentication
   Entries
