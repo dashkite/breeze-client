@@ -1,70 +1,282 @@
 import * as Fn from "@dashkite/joy/function"
-import * as P from "@dashkite/joy/predicate"
+import { generic } from "@dashkite/joy/generic"
 import * as Obj from "@dashkite/joy/object"
-import * as k from "@dashkite/katana"
-import * as m from "@dashkite/mercury"
-import {confidential} from "panda-confidential"
-import { Profile } from "./profile"
-import * as r from "./resources"
+import * as T from "@dashkite/joy/type"
+import * as It from "@dashkite/joy/iterable"
+import * as Val from "@dashkite/joy/value"
+import * as Ks from "@dashkite/katana/sync"
+import * as K from "@dashkite/katana/async"
+import * as R from "./resources"
+import * as C from "@dashkite/carbon"
+import Profile from "@dashkite/zinc"
+import * as Me from "@dashkite/mercury"
 
-{randomBytes, convert} = confidential()
+# Templates
+import status from "./status"
+import providers from "./providers"
+import waiting from "./waiting"
 
-# TODO if this fails, be sure to delete profile from idb
-# TODO perhaps change terminology in breeze API
-#      to use address instead of nickname
+find = Fn.flip Fn.detach Array::find
 
-createProfile = k.test (P.negate Profile.exists),
-  k.peek Fn.flow [
-    Profile.create
-    (profile) ->
-      nickname: profile.address
-      profile: profile.toJSON()
-    r.Profiles.post
+attempt = Fn.curry (f, g) ->
+  Fn.arity f.length, (args...) ->
+    try
+      await f.apply @, args
+    catch error
+      g error, args
+
+hasStatus = Fn.curry (status, error) ->
+  (T.isType Me.Error, error) && error.status == status
+
+# TODO replace with Obj.fromEntries when avail
+getParameters = ->
+  r = {}
+  for [ key, value ] from (new URL window.location).searchParams
+    r[key] = value
+  r
+
+getAuthority = (mode) ->
+  if mode == "production"
+    "breeze-api.dashkite.com"
+  else
+    "breeze-#{mode}-api.dashkite.com"
+
+initialize = Fn.flow [
+  K.read "handle"
+  K.peek (handle, description) ->
+    Obj.assign handle.data, {
+      description...
+      token: getParameters().token
+      authority: ( _authority = getAuthority description.mode ) 
+      authorities: 
+        breeze: _authority
+        application: description.authority
+      # we store these as objects because they're wrapped as proxies
+      # once we assign them to the observed data property
+      profiles:
+        current: (_current = await Profile.current)?.toObject()
+        application: undefined
+        breeze: if _current?
+          (await Profile.getAdjunct _authority)?.toObject()
+    }
+]
+
+reset = Fn.flow [
+  K.read "handle"
+  K.push (handle, description) -> getAuthority description.mode
+  K.push (authority, handle, description) ->
+    await Profile.getAdjunct authority
+  K.pop (profile) -> profile.delete()
+  K.push -> Profile.current
+  K.pop (profile) -> profile.delete()
+  K.peek (authority, handle, description) ->
+    Obj.assign handle.data, {
+      description...
+      token: undefined
+      authority: authority
+      authorities: 
+        breeze: authority
+        application: description.authority
+      profiles:
+        current: undefined
+        application: undefined
+        breeze: undefined
+    }
+]
+
+action = (data) ->
+  if data.profiles.application?
+    "success"
+  else
+    if data.profiles.breeze?
+      if data.entries?
+        if data.entries.length > 0
+          if data.profiles.current?
+            "reconcile entries"
+          else
+            "save entry as local profile"
+        else
+          if data.profiles.current?
+            "save local profile as entry"
+          else
+            "create default profile"
+      else
+        "get entries"
+    else
+      if data.token?
+        "get breeze profile"
+      else
+        "get oauth token"
+
+
+_run = Fn.flow [
+  K.peek (name) -> console.log "action: ", name
+  K.poke (name) -> attempt actions[name], errors[name]
+  # TODO add to Katana as K.apply
+  (daisho) ->
+    f = daisho.pop()
+    f daisho
+]
+
+run = (name) ->
+  Fn.flow [
+    K.push Fn.wrap name
+    _run
   ]
 
-addIdentity = Fn.tee Fn.flow [
-  k.push Profile.get
-  k.poke (profile, token) ->
-    nickname: profile.address
-    token: token
-  k.pop r.Identities.post
+transition = Fn.flow [
+  K.push action
+  _run
 ]
 
-register = Fn.tee Fn.flow [
-  createProfile
-  addIdentity
-]
+actions =
 
-authenticate = k.push (token) -> r.Authentication.post { token }
+  "get oauth token": Fn.flow [
+    C.render providers
+  ]
 
-load = k.poke r.Authentication.parseProfile
+  "get breeze profile": Fn.flow [
+    K.poke R.Authentication.post
+    K.push -> Profile.current
+    K.read "data"
+    K.peek (data, profile) -> data.profiles.breeze = profile.toObject()
+  ]
 
-getNickname = Fn.flow [
-  Profile.get
-  Obj.get "address"
-]
+  "create breeze profile": Fn.flow [
+    K.push (data) -> Profile.create data.authorities.breeze, {}
+    # we need to set this in case there's no current profile
+    K.peek (profile) -> Profile.current = profile
+    K.poke (profile) -> profile.toObject()
+    K.push (profile, data) ->
+      authority: data.authorities.breeze
+      nickname: profile.address
+      profile: JSON.stringify profile
+    K.pop R.Profiles.post
+    run "create identity"
+  ]
 
-fetchEntry = Fn.flow [
-  k.push getNickname
-  k.mpoke (nickname, tag) -> { nickname, tag }
-  k.poke r.Entries.get
-  k.poke ([entry]) -> entry
-]
+  "create identity": Fn.flow [
+    K.push (profile, data) ->
+      authority: data.authorities.breeze
+      nickname: profile.address
+      token: data.token
+    K.pop R.Identities.post
+    K.peek (profile, data) -> data.profiles.breeze = profile
+  ]
 
-readEntry = k.poke Fn.flow [
-  r.Entry.get
-  Obj.get "content"
-]
+  "get entries": Fn.flow [
+    K.push (data) ->
+      authority: data.authorities.breeze
+      nickname: data.profiles.breeze.address
+      tag: data.authorities.application
+    K.poke R.Entries.get
+    K.peek (entries, data) ->
+      data.entries = entries
+  ]
 
-addEntry = Fn.flow [
-  k.push getNickname
-  k.poke (nickname, context) -> Obj.merge context, {nickname}
-  k.poke r.Entries.post
-  k.mpoke ({nickname, id}, {tag}) ->  { nickname, id, tag }
-  k.pop r.Tag.put
+  "create default profile": Fn.flow [
+    K.push (data) ->
+      Profile.createWithAddress data.authorities.application,
+        data.profiles.breeze.address, {}
+    # store the profile as an object because it's wrapped as a proxy
+    # once we assign it to the observed data property
+    K.peek (profile, data) ->
+      Profile.current = profile
+      data.profiles.current = profile.toObject()
+  ]
+
+  "save local profile as entry": Fn.flow [
+    K.push (data) ->
+      authority: data.authorities.breeze
+      nickname: data.profiles.breeze.address
+      displayName: data.displayName
+      # this needs a JSON string as the property
+      content: JSON.stringify data.profiles.current
+    K.poke R.Entries.post
+    K.push (entry, data) ->
+      authority: data.authorities.breeze
+      nickname: entry.nickname
+      id: entry.id
+      tag: data.authorities.application
+    K.pop R.Tag.put
+    run "success"
+  ]
+
+  "save entry as local profile": Fn.flow [
+    K.push (data) ->
+      for entry in data.entries
+        if entry.nickname == data.profiles.breeze.address
+          return entry
+      throw new Error "no match found"
+    K.push (entry, data) ->
+      authority: data.authorities.breeze
+      nickname: entry.nickname
+      id: entry.id
+    K.poke R.Entry.get
+    K.push (entry) -> Profile.createFromJSON entry.content
+    K.peek (profile) -> Profile.current = profile
+    run "success"
+  ]
+  
+  "reconcile entries": Fn.flow [
+    K.push (data) ->
+      _filter = (entry) -> entry.nickname == data.profiles.current.address
+      find _filter, data.entries
+    K.branch [
+      [ T.isDefined, 
+        Fn.flow [ K.discard, run "save entry as local profile" ] ]
+      [ (Fn.wrap true),
+        Fn.flow [ K.discard, run "save local profile as entry" ] ]
+    ] 
+  ]
+
+  "success": Fn.flow [
+    K.read "handle"
+    K.peek (handle) -> handle.dispatch "success"
+  ]
+
+errors = do ->
+  r = {}
+  for _name, _handler of actions
+    r[_name] = generic
+      name: _name
+      default: (error) -> throw error
+  r
+
+handler = (action, predicate, f) ->
+  generic errors[action], predicate, T.isArray, (error, args) ->
+    Fn.apply f, args
+
+handler "get breeze profile", (hasStatus 403), run "create breeze profile"
+
+handler "get breeze profile", (hasStatus 404),
+  K.peek (data) ->
+    Obj.assign data,
+      message: "Your token expired. Please login with your provider again."
+      token: undefined
+
+handler "get entries", (hasStatus 401), reset
+
+handler "create identity", (hasStatus 404), reset
+
+redirect = Fn.pipe [
+  Ks.push (target, event, handle) ->
+    authority: handle.data.authorities.breeze
+    service: target.name
+    redirectURL: do ->
+      _url = new URL window.location.href
+      _url.searchParams.delete "token"
+      _url.toString()
+
+  Fn.flow [
+    C.render waiting
+    K.push R.OAuth.get
+    K.peek (url) -> window.location.replace url
+  ]
 ]
 
 export {
-  authenticate, load, register
-  fetchEntry, readEntry, addEntry
+  initialize
+  transition
+  redirect
 }
