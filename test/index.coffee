@@ -46,8 +46,8 @@ do browse ({browser, port}) ->
   state = undefined
 
   text = (description) ->
-    r = ""
-    for _k1, _v1 of description
+    r = "[#{description.index}] "
+    for _k1, _v1 of description when _k1 != "index"
       r += "#{_k1}: "
       for _k2, _v2 of _v1
         if _v2
@@ -113,33 +113,39 @@ do browse ({browser, port}) ->
           authenticate
         ]
 
-  print await Amen.test "Breeze Client", [
 
-    await Amen.test
-      description: "Set up baseline known-good state"
-      wait: false
-      ->
-        state = await do m.launch browser, [
-          m.page
-          m.goto "http://localhost:#{port}/"
-          authenticate
-        ]
+  setup = ->
+    state = await do _.flow [
+      -> { browser }
+      m.page
+      m.goto "http://localhost:#{port}/"
+      authenticate
+    ]
 
-    Amen.test "state tests", await do ->
-      # for i in [0..63]
-      for i in [0..5]
-        # give GitHub a minute
-        await _.sleep 100
-        await test
-          local:
-            breeze: (i & 1) != 0
-            app: (i & 2) != 0
-            token: (i & 4) != 0
-          remote:
-            profile: (i & 8) != 0
-            entry: (i & 16) != 0
-            id: (i & 32) != 0
-          
-  ]
+  print await Amen.test "Breeze Client", await do ->
+
+    await setup()
+
+    for i in [0..63]
+      # give GitHub a minute
+      await _.sleep 30000
+      result = await test
+        index: i
+        local:
+          breeze: (i & 1) != 0
+          app: (i & 2) != 0
+          token: (i & 4) != 0
+        remote:
+          profile: (i & 8) != 0
+          entry: (i & 16) != 0
+          id: (i & 32) != 0
+      console.log result
+      if result[1] != true
+        await _.sleep 30000
+        await browser.close()
+        browser = await m.connect()
+        try
+          await setup()
+      result
 
   process.exit if Amen.success then 0 else 1

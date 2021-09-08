@@ -2,25 +2,59 @@ import assert from "@dashkite/assert"
 import { test } from "@dashkite/amen"
 import "@dashkite/breeze-client"
 import Zinc from "@dashkite/zinc"
-import { Profile } from "../../src/resources"
+import { Profile, Identities, Identity, Entries, Entry } from "../../src/resources"
 
 window.__ready = false
 
 window.__describe = (description) ->
-  if !description.remote.profile
-    console.log "setup: deleting remote breeze profile"
-    profile = await Zinc.getAdjunct "breeze-development-api.dashkite.com"
-    await Profile.delete
-      authority: "breeze-development-api.dashkite.com"
-      nickname: profile.address
-  if !description.local.breeze
-    console.log "setup: deleting local breeze profile"
-    profile = await Zinc.getAdjunct "breeze-development-api.dashkite.com"
-    await profile.delete()
-  if !description.local.app
-    console.log "setup: deleting local app profile"
-    profile = await Zinc.current
-    await profile.delete()
+
+  profile = await Zinc.getAdjunct "breeze-development-api.dashkite.com"
+
+  try
+    if !description.remote.id
+      console.log "setup: deleting remote breeze identities"
+      identities = await Identities.get
+        authority: "breeze-development-api.dashkite.com"
+        nickname: profile.address
+      for identity in identities
+        await Identity.delete
+          authority: "breeze-development-api.dashkite.com"
+          nickname: profile.address
+          id: identity.id
+
+  try
+    if !description.remote.entry 
+      console.log "setup: deleting remote breeze entries"
+      entries = await Entries.get
+        authority: "breeze-development-api.dashkite.com"
+        nickname: profile.address
+        tag: "test-api.dashkite.com"
+      for entry in entries
+        await Entry.delete
+          authority: "breeze-development-api.dashkite.com"
+          nickname: profile.address
+          id: entry.id
+
+  try
+    if !description.remote.profile
+      console.log "setup: deleting remote breeze profile"
+      await Profile.delete
+        authority: "breeze-development-api.dashkite.com"
+        nickname: profile.address
+
+
+  profile = await Zinc.current
+
+  try
+    if !description.local.breeze
+      console.log "setup: deleting local breeze profile"
+      await profile.delete()
+
+  try
+    if !description.local.app
+      console.log "setup: deleting local app profile"
+      await profile.delete()
+
   window.__ready = true
 
 window.addEventListener "DOMContentLoaded", ->

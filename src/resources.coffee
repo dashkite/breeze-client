@@ -70,6 +70,7 @@ Profile =
     m.data "authority"
     z.claim
     m.authorize
+    m.request
   ]
 
 Identities =
@@ -90,6 +91,38 @@ Identities =
     m.request
     m.json
     K.get
+  ]
+
+  get: m.start [
+    initialize
+    pipe [
+      s.resource "identities"
+      s.method "get"
+      m.data [ "nickname" ]
+      m.parameters
+    ]
+    m.data "authority"
+    z.claim
+    m.authorize
+    m.request
+    m.json
+    K.get
+  ]
+
+Identity = 
+
+  delete: m.start [
+    initialize
+    pipe [
+      s.resource "identity"
+      s.method "delete"
+      m.data [ "nickname", "id" ]
+      m.parameters
+    ]
+    m.data "authority"
+    z.claim
+    m.authorize
+    m.request
   ]
 
 Authentication =
@@ -165,6 +198,21 @@ Entry =
     K.get
   ]
 
+  delete: m.start [
+    initialize
+    pipe [
+      s.resource "entry"
+      s.method "delete"
+      m.data [ "nickname", "id" ]
+      m.parameters
+    ]
+    m.data "authority"
+    z.claim
+    m.authorize
+    m.request
+  ]
+
+
 Tag =
 
   put: m.start [
@@ -203,6 +251,7 @@ export {
   Profiles
   Profile
   Identities
+  Identity
   Authentication
   Entries
   Entry

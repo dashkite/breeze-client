@@ -4,6 +4,7 @@ import * as Obj from "@dashkite/joy/object"
 import * as T from "@dashkite/joy/type"
 import * as It from "@dashkite/joy/iterable"
 import * as Val from "@dashkite/joy/value"
+import * as Time from "@dashkite/joy/time"
 import * as Ks from "@dashkite/katana/sync"
 import * as K from "@dashkite/katana/async"
 import * as R from "../../resources"
@@ -58,6 +59,29 @@ initialize = Fn.flow [
         application: undefined
         breeze: if _current?
           (await Profile.getAdjunct _authority)?.toObject()
+    }
+]
+
+reset = Fn.flow [
+  K.read "handle"
+  K.push (handle, description) -> getAuthority description.mode
+  K.push (authority, handle, description) ->
+    await Profile.getAdjunct authority
+  K.pop (profile) -> profile.delete()
+  K.push -> Profile.current
+  K.pop (profile) -> profile.delete()
+  K.peek (authority, handle, description) ->
+    Obj.assign handle.data, {
+      description...
+      token: undefined
+      authority: authority
+      authorities: 
+        breeze: authority
+        application: description.authority
+      profiles:
+        current: undefined
+        application: undefined
+        breeze: undefined
     }
 ]
 
@@ -129,6 +153,10 @@ actions =
       nickname: profile.address
       profile: JSON.stringify profile
     K.pop R.Profiles.post
+    run "create identity"
+  ]
+
+  "create identity": Fn.flow [
     K.push (profile, data) ->
       authority: data.authorities.breeze
       nickname: profile.address
@@ -220,10 +248,7 @@ handler = (action, predicate, f) ->
   generic errors[action], predicate, T.isArray, (error, args) ->
     Fn.apply f, args
 
-handler "get breeze profile", (hasStatus 403), Fn.flow [
-  K.push Fn.wrap "create breeze profile"
-  _run
-]
+handler "get breeze profile", (hasStatus 403), run "create breeze profile"
 
 handler "get breeze profile", (hasStatus 404),
   K.peek (data) ->
@@ -231,6 +256,9 @@ handler "get breeze profile", (hasStatus 404),
       message: "Your token expired. Please login with your provider again."
       token: undefined
 
+handler "get entries", (hasStatus 401), reset
+
+handler "create identity", (hasStatus 404), reset
 
 redirect = Fn.pipe [
   Ks.push (target, event, handle) ->
