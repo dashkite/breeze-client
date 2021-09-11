@@ -35,11 +35,16 @@ getParameters = ->
     r[key] = value
   r
 
-getAuthority = (mode) ->
+getAuthority = ->
+  mode = window.env?.mode ? "development"
   if mode == "production"
     "breeze-api.dashkite.com"
   else
     "breeze-#{mode}-api.dashkite.com"
+
+isAuthenticated = ->
+  (await Profile.current)? &&
+    (await Profile.getAdjunct (await getAuthority()))?
 
 initialize = Fn.flow [
   K.read "handle"
@@ -47,10 +52,10 @@ initialize = Fn.flow [
     Obj.assign handle.data, {
       description...
       token: getParameters().token
-      authority: ( _authority = getAuthority description.mode ) 
+      authority: ( _authority = getAuthority() ) 
       authorities: 
         breeze: _authority
-        application: description.authority
+        application: description.domain
       # we store these as objects because they're wrapped as proxies
       # once we assign them to the observed data property
       profiles:
@@ -63,7 +68,7 @@ initialize = Fn.flow [
 
 reset = Fn.flow [
   K.read "handle"
-  K.push (handle, description) -> getAuthority description.mode
+  K.push getAuthority
   K.push (authority, handle, description) ->
     await Profile.getAdjunct authority
   K.pop (profile) -> profile.delete()
@@ -76,7 +81,7 @@ reset = Fn.flow [
       authority: authority
       authorities: 
         breeze: authority
-        application: description.authority
+        application: description.domain
       profiles:
         current: undefined
         application: undefined
@@ -110,7 +115,6 @@ action = (data) ->
 
 
 _run = Fn.flow [
-  K.peek (name) -> console.log "action: ", name
   K.poke (name) -> attempt actions[name], errors[name]
   # TODO add to Katana as K.apply
   (daisho) ->
@@ -129,6 +133,12 @@ transition = Fn.flow [
   _run
 ]
 
+update = (_status) ->
+  Fn.tee Fn.flow [
+    K.push (data) -> Obj.merge _status, data
+    C.render status
+  ]
+
 actions =
 
   "get oauth token": Fn.flow [
@@ -136,6 +146,7 @@ actions =
   ]
 
   "get breeze profile": Fn.flow [
+    update message: "Get Breeze profile", stage: 1
     K.poke R.Authentication.post
     K.push -> Profile.current
     K.read "data"
@@ -143,6 +154,7 @@ actions =
   ]
 
   "create breeze profile": Fn.flow [
+    update message: "Create Breeze profile", stage: 1
     K.push (data) -> Profile.create data.authorities.breeze, {}
     # we need to set this in case there's no current profile
     K.peek (profile) -> Profile.current = profile
@@ -156,6 +168,7 @@ actions =
   ]
 
   "create identity": Fn.flow [
+    update message: "Create identity", stage: 2
     K.push (profile, data) ->
       authority: data.authorities.breeze
       nickname: profile.address
@@ -165,6 +178,7 @@ actions =
   ]
 
   "get entries": Fn.flow [
+    update message: "Get application profile", stage: 2
     K.push (data) ->
       authority: data.authorities.breeze
       nickname: data.profiles.breeze.address
@@ -175,6 +189,7 @@ actions =
   ]
 
   "create default profile": Fn.flow [
+    update message: "Create default application profile", stage: 2
     K.push (data) ->
       Profile.createWithAddress data.authorities.application,
         data.profiles.breeze.address, {}
@@ -186,6 +201,7 @@ actions =
   ]
 
   "save local profile as entry": Fn.flow [
+    update message: "Store application profile", stage: 2
     K.push (data) ->
       authority: data.authorities.breeze
       nickname: data.profiles.breeze.address
@@ -203,6 +219,7 @@ actions =
   ]
 
   "save entry as local profile": Fn.flow [
+    update message: "Store application profile", stage: 2
     K.push (data) ->
       for entry in data.entries
         if entry.nickname == data.profiles.breeze.address
@@ -219,6 +236,7 @@ actions =
   ]
   
   "reconcile entries": Fn.flow [
+    update message: "Reconcile application profile", stage: 2
     K.push (data) ->
       _filter = (entry) -> entry.nickname == data.profiles.current.address
       find _filter, data.entries
@@ -231,6 +249,7 @@ actions =
   ]
 
   "success": Fn.flow [
+    update message: "Success", stage: 3
     K.read "handle"
     K.peek (handle) -> handle.dispatch "success"
   ]
@@ -276,6 +295,7 @@ redirect = Fn.pipe [
 ]
 
 export {
+  isAuthenticated
   initialize
   transition
   redirect
