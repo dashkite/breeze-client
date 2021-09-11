@@ -6,6 +6,7 @@ import * as M from "@dashkite/joy/metaclass"
 import css from "./css"
 
 import * as _ from "./helpers"
+export { isAuthenticated } from "./helpers"
 
 class extends C.Handle
 
@@ -20,3 +21,4 @@ class extends C.Handle
       C.event "click", [ C.within "button", [ _.redirect ] ]
   ]
 ]
+
