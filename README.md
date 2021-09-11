@@ -1,6 +1,6 @@
 # Breeze Client
 
-Web Component and OAuth handler for use with the Breeze authentication API.
+Web Component for use with the Breeze authentication API.
 
 ## Install
 
@@ -10,99 +10,40 @@ npm i @dashkite/breeze-client
 
 ## Usage
 
-The Breeze Client includes:
-
-- A Web Component for connecting an identity via the Breeze API
-- A high-level combinator interface for handling OAuth cases.
-
-To use the component, simply import `@dashkite/breeze-client` and render the component using the `breeze-connect` tag.
-
-To handle the OAuth redirect, add an appropriate route and call combinators to access Breeze API resources, depending on the circumstances.
-
-[neon-breeze](https://github.com/dashkite/neon-breeze) was designed specifically to make this easy.
-
-### Helium Configuration
-
-The Breeze Client uses `@dashkite/helium` to reference singleton configuration across the application modules.
-
-#### configuration:breeze 
-
-```yaml
-api: URL for the Breeze API or compatible.
-authority: Name of the capability authority.
-redirectURL: Return URL when redirected back from OAuth identity provider.
-entry: Name for the entry tag the application profile is stored under.
-entryDisplayName: Human-friendly name of the entry.
-```
-
-### Example: Authentication
+In your application, import Breeze Client:
 
 ```coffeescript
-# somewhere in your imports
-import * as b from "@dashkite/breeze-client"
-
-# Authenticate is passed a stack with the Breeze identity token on top.
-
-authenticate = flow [
-  b.authenticate
-  k.branch [
-    [
-      (expect 404),
-      reportFailure "It looks like this login failed or is stale. Login with your identity provider to try again."
-    ]
-    [
-      (expect 403),
-      reportFailure "This login with your identity provider was successful, but it looks like you haven't connected it with your profile. Using a device with your existing profile, connect your profile to allow login across devices."
-    ]
-    [
-      (expect 500),
-      reportFailure "There's been a problem, and this login cannot continue."
-    ]
-    [
-      (expect 200),
-      flow [
-        b.load
-        HeRead "entry"
-        b.fetchEntry
-        k.branch [
-          [
-            isUndefined,
-            reportFailure "This login with your identity provider was successful, but it looks like there isn't a profile connected to it. Using a logged in device, connect your profile to allow login across devices."
-          ]
-          [
-            isDefined,
-            flow [
-              reportPips 2
-              b.readEntry
-              p.createFromJSON
-              successNavigation
-            ]
-          ]
-] ] ] ] ]
+import "@dashkite/breeze-client"
 ```
 
-## API
+In your markup for your login page, create an instance of the component:
 
-### *authenticate*
+```pug
+breeze-connect(
+  data-display-name = "Acme, Inc."
+  data-domain = "acme.com"
+)
+```
 
-Obtains a Breeze profile based on the browser’s query parameters and returns a promise for the HTTP response for the profile.
+If the client has not yet authenticated, this will display a list of buttons for each supported provider.
 
-### *load*
+If the client is already authenticated—meaning there is already a profile stored locally—the component will display a success message and generate a `success` event.
 
-Instantiates a Breeze profile when given an OK response from *authenticate*
+If the client state is undefined, the component will attempt to restore a well-defined state, possibly starting with the list of providers.
 
-### *register*
+**Warning:** The component may lose authentication state attempting to restore a well-defined state locally. Your application should attempt to establish a well-defined state prior to loadiing the component.
 
-Create a local Breeze profile, if one doesn’t exist, create a Breeze identity based on the browser's query parameters.
+You may determine the state of local client using the Zinc library. It's the responsibility of your application to try to define an application profile, if applicable. For example, if your application allows for multiple profiles, you should ensure that you determine which profile to use prior to loading the component.
 
-### *fetchEntry*
+You may determine whether a device is authenticated using the `isAuthenticated` function exported by Breeze Connect.
 
-Obtains a Breeze entry reference for the given profile and tag. If it returns `undefined`, the entry does not exist that is associated with the given profile.
+```coffeescript
+import { isAuthenticated } from "@dashkite/breeze-connect"
 
-### *readEntry*
+do ->
 
-When given a Breeze entry reference, returns the entry proper.
-
-### *addEntry*
-
-Adds a given entry to a Breeze profile's set of entries and tags it with the given tag.
+  if (await isAuthenticated())
+    console.log "Authenticated!"
+  else
+    console.log "Not yet authenticated."
+```
