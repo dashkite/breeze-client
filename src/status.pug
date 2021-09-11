@@ -1,18 +1,18 @@
-form
+mixin pip(n)
+  if stage >= n
+    .pip.success
+  else
+    .pip
+
+article
   header
     h1 Validating Authentication&hellip;
 
-  section
-    label
-      .progress
-        .pip
-        .pip
-        .pip
-      
-      .message
+    if message 
+      .message 
+        p= message
 
-  footer
-    nav
-      p.login.hidden: bora-link(data-name = "connect") Login Again
-      
-      p.home.hidden: bora-link(data-name = "home") Go Home
+  section#progress
+    +pip(1)
+    +pip(2)
+    +pip(3)
