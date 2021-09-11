@@ -4,6 +4,8 @@ import "@dashkite/breeze-client"
 import Zinc from "@dashkite/zinc"
 import { Profile, Identities, Identity, Entries, Entry } from "../../src/resources"
 
+window.env = mode: "development"
+
 window.__ready = false
 
 window.__describe = (description) ->
