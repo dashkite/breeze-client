@@ -126,7 +126,8 @@ do browse ({browser, port}) ->
 
     await setup()
 
-    for i in [0..63]
+    # for i in [0..63]
+    for i in [0..1]
       # give GitHub a minute
       await _.sleep 30000
       result = await test
