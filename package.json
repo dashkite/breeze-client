@@ -1,6 +1,6 @@
 {
   "name": "@dashkite/breeze-client",
-  "version": "1.0.4-beta.3",
+  "version": "1.1.0-beta.0",
   "description": "Web Component and OAuth handler for use with the Breeze authentication API",
   "keywords": [],
   "homepage": "https://github.com/dashkite/breeze-client#readme",
